@@ -1,16 +1,44 @@
-/*
-  Створи список справ.
-  На сторінці є два інпути які має вводиться назва і текст задачі.
-  Після натискання на кнопку "Add" завдання додається до списку #task-list.
+import { loadFromLs, saveInLs } from './js/local-storage-api';
+import { refs } from './js/refs';
+import { addTask, loadTasks } from './js/render-tasks';
+import { changeTheme } from './js/theme-switcher';
 
-  У кожної картки має бути кнопка "Delete", щоб можна було
-  прибрати завдання зі списку.
-  Список із завданнями має бути доступним після перезавантаження сторінки.
+let arr = loadFromLs('arr') ?? [];
+let theme = loadFromLs('theme') ?? 'dark';
 
-  Розмітка картки задачі
-  <li class="task-list-item">
-      <button class="task-list-item-btn">Delete</button>
-      <h3>Заголовок</h3>
-      <p>Текст</p>
-  </li>
-*/
+changeTheme(document.body, theme, true);
+if (arr.length > 0) loadTasks(arr);
+
+refs.form.addEventListener('submit', e => {
+  e.preventDefault();
+  const title = refs.form.elements.taskName.value.trim();
+  const desc = refs.form.elements.taskDescription.value.trim();
+
+  if (title === '' || desc === '') {
+    alert('Заповніть всі поля');
+    return;
+  }
+
+  const task = {
+    title: title,
+    desc: desc,
+  };
+
+  refs.list.insertAdjacentHTML('beforeend', addTask(task));
+  arr.push(task);
+
+  saveInLs('arr', arr);
+
+  refs.form.reset();
+});
+
+refs.list.addEventListener('click', e => {
+  if (e.target.tagName !== 'BUTTON') return;
+  e.target.parentElement.remove();
+  arr = arr.filter(el => el.title !== e.target.nextElementSibling.textContent);
+  saveInLs('arr', arr);
+});
+
+refs.btn.addEventListener('click', () => {
+  changeTheme(document.body, loadFromLs('theme'), false);
+});
